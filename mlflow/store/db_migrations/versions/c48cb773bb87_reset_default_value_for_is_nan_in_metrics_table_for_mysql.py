@@ -31,7 +31,7 @@ def upgrade():
         with op.batch_alter_table("metrics") as batch_op:
             batch_op.alter_column(
                 "is_nan",
-                type_=sa.types.Boolean(create_constraint=True),
+                type_=sa.types.Boolean(create_constraint=False),
                 nullable=False,
                 server_default="0",
             )

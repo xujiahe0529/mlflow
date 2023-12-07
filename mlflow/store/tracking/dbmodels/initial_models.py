@@ -19,6 +19,7 @@ from sqlalchemy import (
     Integer,
     PrimaryKeyConstraint,
     String,
+    Boolean,
 )
 from sqlalchemy.orm import backref, declarative_base, relationship
 
@@ -148,7 +149,7 @@ class SqlRun(Base):
 
     __table_args__ = (
         CheckConstraint(source_type.in_(SourceTypes), name="source_type"),
-        CheckConstraint(status.in_(RunStatusTypes), name="status"),
+        # CheckConstraint(status.in_(RunStatusTypes), name="status"),
         CheckConstraint(lifecycle_stage.in_(["active", "deleted"]), name="runs_lifecycle_stage"),
         PrimaryKeyConstraint("run_uuid", name="run_pk"),
     )
@@ -205,12 +206,21 @@ class SqlMetric(Base):
     Run UUID to which this metric belongs to: Part of *Primary Key* for ``metrics`` table.
                                               *Foreign Key* into ``runs`` table.
     """
+    step = Column(BigInteger, nullable=False, default=0)
+    """
+    Metric step: `BigInteger`. Part of *Primary Key* for ``metrics`` table.
+    """
+    is_nan = Column(Boolean, nullable=False, default=False)
+    """
+    Is_nan allow nulls for metric values: `Boolean`. Part of *Primary Key* for
+                                               ``metrics`` table.
+    """
     run = relationship("SqlRun", backref=backref("metrics", cascade="all"))
     """
     SQLAlchemy relationship (many:one) with :py:class:`mlflow.store.dbmodels.models.SqlRun`.
     """
 
-    __table_args__ = (PrimaryKeyConstraint("key", "timestamp", "run_uuid", name="metric_pk"),)
+    __table_args__ = (PrimaryKeyConstraint("key", "timestamp", "step", "run_uuid", "value", "is_nan", name="metric_pk"),)
 
     def __repr__(self):
         return f"<SqlMetric({self.key}, {self.value}, {self.timestamp})>"
